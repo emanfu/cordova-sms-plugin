@@ -47,6 +47,22 @@
             
             [composeViewController setRecipients:recipients];
         }
+        
+        if([MFMessageComposeViewController respondsToSelector:@selector(canSendAttachments)] && [MFMessageComposeViewController canSendAttachments]) {
+
+            NSMutableArray* attachments = [command.arguments objectAtIndex:4];
+            if (attachments != nil) {
+                for (int i = 0; i < [attachments count]; i++) {
+                    if ([composeViewController respondsToSelector:@selector(addAttachmentURL:withAlternateFilename:)]) {
+                        NSString *filename = [NSString stringWithFormat:@"picture%d.png", i];
+                        NSURL *imageUrl =[NSURL URLWithString:attachments[i]];
+                        [composeViewController addAttachmentURL:imageUrl
+                                          withAlternateFilename:filename];
+                    }
+                }
+            }
+        }
+        
         dispatch_async(dispatch_get_main_queue(), ^{
             [self.viewController presentViewController:composeViewController animated:YES completion:nil];
         });
@@ -59,22 +75,27 @@
     // Notifies users about errors associated with the interface
     int webviewResult = 0;
     NSString* message = @"";
+    NSString* status = @"";
     
     switch(result) {
         case MessageComposeResultCancelled:
             webviewResult = 0;
+            status = @"cancelled";
             message = @"Message cancelled.";
             break;
         case MessageComposeResultSent:
             webviewResult = 1;
+            status = @"sent";
             message = @"Message sent.";
             break;
         case MessageComposeResultFailed:
             webviewResult = 2;
+            status = @"failed";
             message = @"Message failed.";
             break;
         default:
             webviewResult = 3;
+            status = @"unknown";
             message = @"Unknown error.";
             break;
     }
@@ -87,8 +108,11 @@
         
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackID];
     } else {
+        NSDictionary *resultDict = [NSDictionary dictionaryWithObjectsAndKeys:
+                                    status, @"status",
+                                    message, @"errorMessage", nil];
         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
-                                                          messageAsString:message];
+                                                          messageAsDictionary:resultDict];
 
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackID];
     }
