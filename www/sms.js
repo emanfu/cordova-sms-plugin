@@ -52,5 +52,14 @@ sms.send = function(phone, message, options, success, failure) {
     );
 };
 
+sms.hasPermission = function(success, failure) {
+    // fire
+    exec(
+        success,
+        failure,
+        'Sms',
+        'has_permission', []
+    );
+};
 
 module.exports = sms;
