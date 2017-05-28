@@ -18,6 +18,7 @@
 
     <!-- android -->
     <platform name="android">
+        <framework src="src/android/build.gradle" custom="true" type="gradleReference"/>
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="Sms">
                 <param name="android-package" value="com.cordova.plugins.sms.Sms"/>
@@ -25,12 +26,20 @@
         </config-file>
 
         <config-file target="AndroidManifest.xml" parent="/manifest">
-            <uses-permission android:name="android.permission.SEND_SMS" />
-            <uses-permission android:name="android.permission.READ_PHONE_STATE" />
             <uses-feature android:name="android.hardware.telephony" android:required="false" />
+            <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+            <uses-permission android:name="android.permission.SEND_SMS"/>
         </config-file>
 
+        <config-file target="AndroidManifest.xml" parent="/manifest/application">
+            <provider android:name="com.cordova.plugins.sms.MmsFileProvider"
+                      android:authorities="com.cordova.plugins.sms.MmsFileProvider"
+                      android:enabled="true"
+                      android:grantUriPermissions="true"
+                      android:exported="false" />
+        </config-file>
         <source-file src="src/android/Sms.java" target-dir="src/com/cordova/plugins/sms" />
+        <source-file src="src/android/MmsFileProvider.java" target-dir="src/com/cordova/plugins/sms" />
     </platform>
 
     <!-- wp8 -->
