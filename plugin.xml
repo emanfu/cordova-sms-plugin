@@ -40,6 +40,7 @@
         </config-file>
         <source-file src="src/android/Sms.java" target-dir="src/com/cordova/plugins/sms" />
         <source-file src="src/android/MmsFileProvider.java" target-dir="src/com/cordova/plugins/sms" />
+        <source-file src="src/android/SmsSender.java" target-dir="src/com/cordova/plugins/sms" />
     </platform>
 
     <!-- wp8 -->
