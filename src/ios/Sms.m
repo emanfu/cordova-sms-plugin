@@ -8,8 +8,9 @@
         self.callbackID = command.callbackId;
         
         if(![MFMessageComposeViewController canSendText]) {
-            UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Notice"
-                                                            message:@"SMS Text not available."
+            NSString* errMessage = @"SMS Text not available.";
+            UIAlertView *alert = [[UIAlertView alloc]initWithTitle:@"Notice"
+                                                           message:errMessage
                                                            delegate:self
                                                   cancelButtonTitle:@"OK"
                                                   otherButtonTitles:nil
@@ -18,6 +19,14 @@
             dispatch_async(dispatch_get_main_queue(), ^{
                 [alert show];
             });
+
+            NSDictionary *resultDict = [NSDictionary dictionaryWithObjectsAndKeys:
+                                        @"smsNotAvailable", @"status",
+                                        errMessage, @"errorMessage", nil];
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
+                                                          messageAsDictionary:resultDict];
+            
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackID];
             return;
         }
         
