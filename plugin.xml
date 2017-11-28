@@ -33,7 +33,7 @@
 
         <config-file target="AndroidManifest.xml" parent="/manifest/application">
             <provider android:name="com.cordova.plugins.sms.MmsFileProvider"
-                      android:authorities="com.cordova.plugins.sms.MmsFileProvider"
+                      android:authorities="${applicationId}.sms.MmsFileProvider"
                       android:enabled="true"
                       android:grantUriPermissions="true"
                       android:exported="false" />

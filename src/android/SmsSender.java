@@ -261,8 +261,9 @@ public class SmsSender {
         final PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context, 0, new Intent(intentFilterAction), 0);
 
+        final String appId = activity.getPackageName();
         Uri writerUri = (new Uri.Builder())
-                .authority("com.cordova.plugins.sms.MmsFileProvider")
+                .authority(appId + ".sms.MmsFileProvider")
                 .path(fileName)
                 .scheme(ContentResolver.SCHEME_CONTENT)
                 .build();
