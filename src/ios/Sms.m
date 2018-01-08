@@ -1,6 +1,9 @@
 #import "Sms.h"
 
-@implementation Sms
+@implementation Sms {
+    BOOL hasAttachments;
+}
+
 @synthesize callbackID;
 
 - (void)send:(CDVInvokedUrlCommand*)command {
@@ -50,11 +53,18 @@
             
             [composeViewController setRecipients:recipients];
         }
-        
+
+        // This is tricky. According to what I observed on iOS 11 with iPhone 6S Plus and iPhone X,
+        // if composeViewController is presented before attachments are added, it has higher chance
+        // that composeViewController will be all black next time when it is presented.
+        [self.viewController presentViewController:composeViewController animated:YES completion:nil];
+
+        hasAttachments = NO;
         if([MFMessageComposeViewController respondsToSelector:@selector(canSendAttachments)] && [MFMessageComposeViewController canSendAttachments]) {
 
             NSMutableArray* attachments = [command.arguments objectAtIndex:4];
             if (attachments != nil) {
+                hasAttachments = [attachments count] > 0;
                 for (int i = 0; i < [attachments count]; i++) {
                     if ([composeViewController respondsToSelector:@selector(addAttachmentURL:withAlternateFilename:)]) {
                         NSString *filename = [NSString stringWithFormat:@"picture%d.png", i];
@@ -66,9 +76,9 @@
             }
         }
         
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self.viewController presentViewController:composeViewController animated:YES completion:nil];
-        });
+//        dispatch_async(dispatch_get_main_queue(), ^{
+//            [self.viewController presentViewController:composeViewController animated:YES completion:nil];
+//        });
     }];
 }
 
@@ -102,23 +112,33 @@
             message = @"Unknown error.";
             break;
     }
-    
-    [self.viewController dismissViewControllerAnimated:YES completion:nil];
-    
-    if(webviewResult == 1) {
-        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
-                                                          messageAsString:message];
-        
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackID];
-    } else {
-        NSDictionary *resultDict = [NSDictionary dictionaryWithObjectsAndKeys:
-                                    status, @"status",
-                                    message, @"errorMessage", nil];
-        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
-                                                          messageAsDictionary:resultDict];
 
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackID];
-    }
+    // Delay the dismission of composeViewController. For a message with attachments, delay 2 seconds;
+    // for a pure text message, delay 0.5 seconds. This is critical for working around the
+    // composeViewController-is-black-next-time problem.
+    double delayInSeconds = hasAttachments ? 2.0 : 0.5;
+    NSLog(@"Dismissing the composition view in %f seconds", delayInSeconds);
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
+    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+        NSLog(@"Dismissing the composition view");
+        [self.viewController dismissViewControllerAnimated:NO completion:^{
+            if(webviewResult == 1) {
+                CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                                                  messageAsString:message];
+                
+                [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackID];
+            } else {
+                NSDictionary *resultDict = [NSDictionary dictionaryWithObjectsAndKeys:
+                                            status, @"status",
+                                            message, @"errorMessage", nil];
+                CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
+                                                              messageAsDictionary:resultDict];
+                
+                [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackID];
+            }
+        }];
+    });
 }
 
 @end
+
