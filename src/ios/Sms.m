@@ -116,7 +116,7 @@
     // Delay the dismission of composeViewController. For a message with attachments, delay 2 seconds;
     // for a pure text message, delay 0.5 seconds. This is critical for working around the
     // composeViewController-is-black-next-time problem.
-    double delayInSeconds = hasAttachments ? 2.0 : 0.5;
+    double delayInSeconds = webviewResult != 1 ? 0 : (hasAttachments ? 2.0 : 0.5);
     NSLog(@"Dismissing the composition view in %f seconds", delayInSeconds);
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
